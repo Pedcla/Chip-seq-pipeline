@@ -1,0 +1,40 @@
+# This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+# Authors: Pedro y Clara
+# Date: October 2017
+
+#! /bin/bash
+
+# Checking the number of input parameters and printing help message
+if [ "$#" -ne 1 ]
+then
+        echo "Incorrect number of input parameters"
+        echo ""
+        echo "This pipeline is to analyse ChIP-seq data"
+        echo "Usage: CHIP <param_file>"
+        echo "      param_file: file input name. See below for an example"
+        echo ""
+        echo ""
+
+        exit 1
+fi
+
+# A single input is expected containing the parameter file
+PARAM_FILE=$1
+
+# Reading parameter file
+LOCAL=$(grep local: $PARAM_FILE | awk '{print $2}')
+INSTALLATION=$( grep installation_folder: $PARAM_FILE | awk '{print $2}')
+
+## Reading mode from parameter file
+
+if [ "$LOCAL" == "YES" ]
+then
+        ./CHIP_local $PARAM_FILE
+elif [ "$LOCAL" == "NO" ]
+then
+        echo "ERROR. THIS PIPELINE ONLY WORKS FROM LOCAL ANALYSIS."
+else
+        echo "ERROR LOCAL OPTION INCORRECT. VALID VALUES YES OR NO."
+        exit 1
+fi
+

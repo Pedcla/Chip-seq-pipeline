@@ -1,0 +1,96 @@
+# This work is licensed under a Creative Commons Attribution-NonCommercial-Share
+# Alike 4.0 International License.
+# Authors: Pedro Romero Marquez and Clara Macias Zabala
+# Date: October 2017
+
+#! /bin/bash
+
+# Checking the number of input parameters and printing help message
+if [ "$#" -ne 1 ]
+then
+        echo "Incorrect number of input parameters"
+        echo ""
+        echo "This pipeline analyses RNA-seq data"
+        echo "Usage: SPIN <param_file>"
+        echo "      param_file: file input name. See below for an example"
+        echo ""
+        echo ""
+
+        exit 1
+fi
+
+# A single input is expected containing the parameter file
+PARAM_FILE=$1
+
+# Reading parameter file
+ROOT_DIR=$(grep root_dir: $PARAM_FILE | awk '{print $2}')
+MASTER=$(grep master: $PARAM_FILE | awk '{print $2}')
+NO_SAMPLES=$(grep number_of_samples: $PARAM_FILE | awk '{print $2}')
+NO_INPUT=$(grep number_of_input: $PARAM_FILE | awk '{print $2}')
+GENOME=$( grep genome: $PARAM_FILE | awk '{print $2}')
+ANNOTATION=$( grep annotation: $PARAM_FILE | awk '{print $2}')
+INSTALLATION=$(grep installation_folder: $PARAM_FILE | awk '{print $2}')
+
+#Building working directory structure
+
+cd $ROOT_DIR
+mkdir $MASTER
+cd $ROOT_DIR/$MASTER
+mkdir genome annotation results samples log
+cd samples
+
+i=1
+while [[ $i -le $NO_SAMPLES ]]
+do
+        mkdir chip$i
+        ((i++))
+done
+
+j=1
+while [[ $j -le $NO_INPUT ]]
+do
+        mkdir input$j
+        ((j++))
+done
+
+echo "Working directory done" > $ROOT_DIR/$MASTER/log/log.txt
+
+#Colocar el genoma y la anotacion en sus carpetas correspondientes.
+
+cd $ROOT_DIR/$MASTER/genome
+cp $GENOME .
+
+echo "Chromosome copied successfully" >> $ROOT_DIR/$MASTER/log/log.txt
+
+cd $ROOT_DIR/$MASTER/annotation
+cp $ANNOTATION .
+
+echo "Annotation copied successfully" >> $ROOT_DIR/$MASTER/log/log.txt
+
+k=1
+while [[ $k -le $NO_SAMPLES ]]
+do
+        cd $ROOT_DIR/$MASTER/samples/chip${k}
+        CHIP=$(grep chip${k}: $INSTALLATION/example_param_file_local.txt | awk '{print $2}')
+        cp $CHIP .
+        echo "Sample $k copied succesfully" >> $ROOT_DIR/$MASTER/log/log.txt
+        ((k++))
+done
+
+m=1
+while [[ $m -le $NO_INPUT ]]
+do
+        cd $ROOT_DIR/$MASTER/samples/input${m}
+        INPUT=$(grep input${m}: $INSTALLATION/example_param_file_local.txt | awk '{print $2}')
+        cp $INPUT .
+        echo "Input $m copied succesfully" >> $ROOT_DIR/$MASTER/log/log.txt
+        ((m++))
+done
+
+##Building genome index
+
+qsub $INSTALLATION/building_index.sge $INSTALLATION/example_param_file_local.txt
+echo "Working directory DONE successfully" > $ROOT_DIR/$MASTER/log/Blackboard_directory.txt
+echo "Starting to build the index..." >> $ROOT_DIR/$MASTER/log/Blackboard_directory.txt
+
+
