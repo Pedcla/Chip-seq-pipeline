@@ -1,0 +1,11 @@
+local: YES
+root_dir: /home/pedcla/tmp/
+master: chipseq
+number_of_samples: 1
+number_of_input: 1
+genome: /home/pedcla/tmp/prr5_data/chromosome1.fa
+annotation: /home/pedcla/tmp/prr5_data/chromosome1.gtf
+installation_folder: /home/pedcla/dev/chipseq_pipeline/test
+input1: /home/pedcla/tmp/prr5_data/input_prr5_chr1.fastq
+chip1: /home/pedcla/tmp/prr5_data/chip_prr5_chr1.fastq
+

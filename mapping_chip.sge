@@ -1,0 +1,53 @@
+#$ -S /bin/bash
+#$ -N chip
+#$ -V
+#$ -cwd
+#$ -j yes
+#$ -o chip_mapping
+
+# A single input is expected containing the parameter file
+PARAM_FILE=$1
+
+# Reading parameter file
+WORK_DIR=/home/pedcla/tmp/chipseq
+NO_SAMPLES=$(grep number_of_samples: $PARAM_FILE | awk '{print $2}')
+GENOME=$( grep genome: $PARAM_FILE | awk '{print $2}')
+ANNOTATION=$( grep annotation: $PARAM_FILE | awk '{print $2}')
+INSTALLATION=$(grep installation_folder: $PARAM_FILE | awk '{print $2}')
+
+# Accession to the folder of the sample$j
+
+k=1
+while [[ $k -le $NO_SAMPLES ]]
+do
+        cd $WORK_DIR/samples/chip${k}
+        fastqc *.fastq
+        ((k++))
+done
+
+echo "Quality control of samples made successfully" > $WORK_DIR/log/mapping.txt
+
+# Mapping short readings to the reference genome
+
+m=1
+while [[ $m -le $NO_SAMPLES ]]
+do
+        cd $WORK_DIR/samples/chip${m}
+        echo "Sample$m is processing"
+        bowtie -S -v 2 --best --strata -m 1 $WORK_DIR/genome/index *.fastq > chip.sam
+        echo "Sample$m is DONE"
+        ((m++))
+done
+
+echo "Mapping made successfully" >> $WORK_DIR/log/mapping.txt
+
+# Comunication through a blackboard
+
+echo "CHIP DONE" > $WORK_DIR/log/mapping_blackboard.txt
+DONE_SAMPLES=$(wc -l $WORK_DIR/log/mapping_blackboard.txt | awk '{print $1}')
+
+if [ $DONE_SAMPLES -eq $NO_SAMPLES ]
+then
+        qsub $INSTALLATION/peak_calling.sge $INSTALLATION/example_param_file_local.txt
+fi
+

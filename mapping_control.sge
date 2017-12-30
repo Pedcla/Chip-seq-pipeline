@@ -1,0 +1,51 @@
+#$ -S /bin/bash
+#$ -N input
+#$ -V
+#$ -cwd
+#$ -j yes
+#$ -o input
+
+# A single input is expected containing the parameter file
+PARAM_FILE=$1
+
+# Reading parameter file
+WORK_DIR=/home/pedcla/tmp/chipseq
+NO_INPUT=$(grep number_of_input: $PARAM_FILE | awk '{print $2}')
+GENOME=$( grep genome: $PARAM_FILE | awk '{print $2}')
+ANNOTATION=$( grep annotation: $PARAM_FILE | awk '{print $2}')
+INSTALLATION=$(grep installation_folder: $PARAM_FILE | awk '{print $2}')
+
+# Mapping and quality control of the input$j
+
+j=1
+while [[ $j -le $NO_INPUT ]]
+do
+        cd $WORK_DIR/samples/input${j}
+        fastqc *.fastq
+        ((j++))
+done
+
+echo "Quality control of input made successfully" > $WORK_DIR/log/mapping.txt
+
+i=1
+while [[ $i -le $NO_INPUT ]]
+do
+        cd $WORK_DIR/samples/input${i}
+        echo "Input$i is processing"
+        bowtie -S -v 2 --best --strata -m 1 $WORK_DIR/genome/index *.fastq > input.sam
+        echo "Input$i is DONE"
+        ((i++))
+done
+
+echo "Mapping made successfully" >> $WORK_DIR/log/mapping.txt
+
+# Communication through a blackboard
+
+echo "INPUT DONE" > $WORK_DIR/log/mapping_input_blackboard.txt
+DONE_INPUT=$(wc -l $WORK_DIR/log/mapping_input_blackboard.txt | awk '{print $1}')
+
+if [ $DONE_INPUT -eq $NO_INPUT ]
+then
+        qsub $INSTALLATION/mapping_chip.sge $INSTALLATION/example_param_file_local.txt
+fi
+

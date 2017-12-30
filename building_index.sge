@@ -1,0 +1,34 @@
+#$ -S /bin/bash
+#$ -N index
+#$ -V
+#$ -cwd
+#$ -j yes
+#$ -o genome_index
+
+# A single input is expected containing the parameter file
+PARAM_FILE=$1
+
+# Reading parameter file
+WORK_DIR=/home/pedcla/tmp/chipseq
+GENOME=$WORK_DIR/genome/*.fa
+INSTALLATION=$(grep installation_folder: $PARAM_FILE | awk '{print $2}')
+
+# Accesion to genome containing folder
+cd $WORK_DIR/genome
+
+# Building genome index
+bowtie-build $GENOME index
+
+# Communication through a blackboard
+echo "Index DONE" > $WORK_DIR/log/index_blackboard.txt
+echo "Starting mapping" >> $WORK_DIR/log/index_blackboard.txt
+
+# Running next script: mapping.
+
+DONE_INDEX=$(wc -l $WORK_DIR/log/index_blackboard.txt | awk '{print $1}')
+
+if [ $DONE_INDEX -eq 2 ]
+then
+        qsub $INSTALLATION/mapping_control.sge $INSTALLATION/example_param_file_local.txt
+fi
+

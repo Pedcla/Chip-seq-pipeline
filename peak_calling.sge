@@ -1,0 +1,51 @@
+#$ -S /bin/bash
+#$ -N peak_calling
+#$ -V
+#$ -cwd
+#$ -j yes
+#$ -o peak_calling
+
+# A single input is expected containing the parameter file
+PARAM_FILE=$1
+
+# Reading parameter file
+WORK_DIR=/home/pedcla/tmp/chipseq
+SCRIPTS=/home/pedcla/tmp/prr5_data/scripts
+NO_SAMPLES=$(grep number_of_samples: $PARAM_FILE | awk '{print $2}')
+NO_INPUT=$(grep number_of_input: $PARAM_FILE | awk '{print $2}')
+INSTALLATION=$(grep installation_folder: $PARAM_FILE | awk '{print $2}')
+
+cd $WORK_DIR/results/
+j=1
+while [[ $j -le $NO_SAMPLES ]]
+do
+        k=1
+        while [[ $k -le $NO_INPUT ]]
+        do
+                macs2 callpeak -t $WORK_DIR/samples/chip${j}/chip.sam -c $WORK_DIR/samples/input${k}/input.sam -f SAM --outdir . -n picos
+                echo "Peak calling DONE" > $WORK_DIR/log/peak_calling_blackboard.txt
+                ((k++))
+        done
+        ((j++))
+done
+
+# Java PeakAnnotator calling
+
+java -jar -Xmx512m $SCRIPTS/PeakAnnotator.jar -u NDG -p picos_summits.bed -a $WORK_DIR/annotation/*.gtf -g all -o .
+
+# Communication through a blackboard
+
+echo "PeakAnnotator called successfully" > $WORK_DIR/log/peak_calling_blackboard.txt
+
+# Target genes processing using R
+
+cd $WORK_DIR/results
+
+Rscript $INSTALLATION/target_genes.R picos_summits.ndg.bed picos_summits.overlap.bed target_genes.txt
+
+# Making Venn diagram
+
+Rscript $INSTALLATION/venn_diagrams.R /home/pedcla/tmp/prr5_data/All_genes_athalina.txt target_genes.txt .
+
+echo "Results processing DONE"
+
