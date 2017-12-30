@@ -18,12 +18,12 @@ Consiste en el montaje de una carpeta contenedora de los ejecutables CHIP y CHIP
 
 *It consist in one folder with the pipelines CHIP and CHIP_local and a folder inside called "test" with the param file and pipelines that make the different parts of the procces: Building index, mapping and peak calling.*
 
-*Requirements:
- - bowtie: used for building the index (bowtie-build) and mapping (bowtie).
- - fastqc: used for quality analysis.
- - macs2: used for peak calling.
- - java: used for peak annotation.
- - R: used for proccesing the results.*
+*Requirements:*
+ - *bowtie: used for building the index (bowtie-build) and mapping (bowtie).*
+ - *fastqc: used for quality analysis.*
+ - *macs2: used for peak calling.*
+ - *java: used for peak annotation.*
+ - *R: used for proccesing the results.*
 
 Uso/*Usage*
 ----------
